@@ -1,0 +1,63 @@
+<div class="auth-wrapper">
+  <div class="auth-card fade-slide-up">
+    <div class="brand-icon">🍳</div>
+    <h2>¡Hola de nuevo!</h2>
+    <p class="subtitle">Inicia sesión para ver tus recetas</p>
+
+    <form (ngSubmit)="onSubmit()" [formGroup]="loginForm" novalidate>
+      <div class="mb-3">
+        <label class="form-label">Correo electrónico</label>
+        <input type="email" class="form-control"
+          [class.is-invalid]="email?.invalid && email?.touched"
+          formControlName="email"
+          placeholder="tu@correo.com"
+          autocomplete="email">
+        @if (email?.errors?.['required'] && email?.touched) {
+          <div class="invalid-feedback d-block">El correo es requerido.</div>
+        }
+        @if (email?.errors?.['email'] && email?.touched) {
+          <div class="invalid-feedback d-block">Ingresa un correo válido.</div>
+        }
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Contraseña</label>
+        <div class="input-group">
+          <input [type]="showPassword ? 'text' : 'password'"
+            class="form-control"
+            [class.is-invalid]="password?.invalid && password?.touched"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password">
+          <button type="button" class="btn btn-secondary"
+            (click)="showPassword = !showPassword"
+            style="border-radius:0 var(--mp-radius-sm) var(--mp-radius-sm) 0;border:1.5px solid var(--mp-border);border-left:none;">
+            <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+          </button>
+        </div>
+        @if (password?.errors?.['required'] && password?.touched) {
+          <div class="invalid-feedback d-block">La contraseña es requerida.</div>
+        }
+        @if (password?.errors?.['minlength'] && password?.touched) {
+          <div class="invalid-feedback d-block">Mínimo 6 caracteres.</div>
+        }
+      </div>
+
+      <button type="submit" class="btn btn-success btn-lg w-100" [disabled]="loading">
+        @if (loading) {
+          <span class="spinner-border spinner-border-sm me-2"></span>
+          Ingresando...
+        } @else {
+          <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
+        }
+      </button>
+    </form>
+
+    <div class="divider">o</div>
+
+    <p class="text-center mb-0" style="font-size:.9rem;color:var(--mp-text-muted);">
+      ¿No tienes cuenta?
+      <a routerLink="/signup" style="font-weight:600;">Regístrate gratis</a>
+    </p>
+  </div>
+</div>
