@@ -39,7 +39,7 @@ export class SignupComponentComponent {
   }
 
   get nombre() { return this.signupForm.get('nombre'); }
-  get email()  { return this.signupForm.get('email'); }
+  get email() { return this.signupForm.get('email'); }
   get password() { return this.signupForm.get('password'); }
   get confirmPassword() { return this.signupForm.get('confirmPassword'); }
 
@@ -51,9 +51,25 @@ export class SignupComponentComponent {
     this.loading = true;
     const { confirmPassword, ...data } = this.signupForm.value;
     this.authService.register(data).subscribe({
-      next: () => {
-        this.toastr.success('Cuenta creada. Inicia sesión.', '¡Registro exitoso!');
-        this.router.navigate(['/login']);
+      next: (res: any) => {
+
+        localStorage.setItem('token', res.token);
+
+        const payload = JSON.parse(
+          atob(res.token.split('.')[1])
+        );
+
+        localStorage.setItem(
+          'role',
+          payload.rol || 'user'
+        );
+
+        this.toastr.success(
+          'Cuenta creada correctamente',
+          '¡Registro exitoso!'
+        );
+
+        this.router.navigate(['/recetas']);
       },
       error: () => {
         this.toastr.error('Error al registrarse. El correo puede ya estar en uso.', 'Error');

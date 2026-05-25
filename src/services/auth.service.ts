@@ -8,22 +8,43 @@ import { Router } from '@angular/router';
 })
 export class AuthService {
 
-  private apiUri = '/api/auth';
-  httpOptions = new HttpHeaders().set('Content-Type', 'application/json');
+  // CAMBIO IMPORTANTE
+  private apiUri = '/api';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  httpOptions = new HttpHeaders().set(
+    'Content-Type',
+    'application/json'
+  );
+
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {}
 
   login(credentials: any): Observable<any> {
-    return this.http.post<any>(this.apiUri + '/login', credentials, { headers: this.httpOptions });
+
+    // CAMBIO IMPORTANTE
+    return this.http.post<any>(
+      this.apiUri + '/login',
+      credentials,
+      { headers: this.httpOptions }
+    );
   }
 
   register(data: any): Observable<any> {
-    return this.http.post<any>(this.apiUri + '/register', data, { headers: this.httpOptions });
+
+    // CAMBIO IMPORTANTE
+    return this.http.post<any>(
+      this.apiUri + '/signup',
+      data,
+      { headers: this.httpOptions }
+    );
   }
 
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+
     this.router.navigate(['/login']);
   }
 

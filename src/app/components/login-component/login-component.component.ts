@@ -41,9 +41,24 @@ export class LoginComponentComponent {
     this.loading = true;
     this.authService.login(this.loginForm.value).subscribe({
       next: (res: any) => {
+
         localStorage.setItem('token', res.token);
-        localStorage.setItem('role', res.role || 'user');
-        this.toastr.success('¡Bienvenido a MealPrepU!', 'Sesión iniciada');
+
+        // LEER JWT
+        const payload = JSON.parse(
+          atob(res.token.split('.')[1])
+        );
+
+        localStorage.setItem(
+          'role',
+          payload.rol || 'user'
+        );
+
+        this.toastr.success(
+          '¡Bienvenido a MealPrepU!',
+          'Sesión iniciada'
+        );
+
         this.router.navigate(['/recetas']);
       },
       error: () => {

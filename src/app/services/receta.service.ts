@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpHeaders
+} from '@angular/common/http';
+
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -8,46 +12,74 @@ import { Observable } from 'rxjs';
 export class RecetaService {
 
   apiUri = '/api/recetas';
-  httpOptions = new HttpHeaders().set('Content-Type', 'application/json');
 
   constructor(private http: HttpClient) {}
 
-  // GET - obtener todas las recetas
-  getAllRecetasData(): Observable<any> {
-    return this.http.get<any>(this.apiUri);
+  // HEADERS CON TOKEN
+  private getHeaders(): HttpHeaders {
+
+    const token = localStorage.getItem('token');
+
+    return new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    });
   }
 
-  // GET - obtener una receta por id
-  getOneReceta(id: any): Observable<any> {
+  // GET - obtener todas
+  getAllRecetasData(): Observable<any> {
+
     return this.http.get<any>(
-      this.apiUri + '/' + id,
-      { headers: this.httpOptions }
+      this.apiUri,
+      {
+        headers: this.getHeaders()
+      }
     );
   }
 
-  // POST - crear nueva receta
+  // GET - obtener una
+  getOneReceta(id: any): Observable<any> {
+
+    return this.http.get<any>(
+      `${this.apiUri}/${id}`,
+      {
+        headers: this.getHeaders()
+      }
+    );
+  }
+
+  // POST
   newReceta(data: any): Observable<any> {
+
     return this.http.post<any>(
       this.apiUri,
       data,
-      { headers: this.httpOptions }
+      {
+        headers: this.getHeaders()
+      }
     );
   }
 
-  // PUT - actualizar receta
+  // PUT
   updateReceta(id: any, data: any): Observable<any> {
+
     return this.http.put<any>(
-      this.apiUri + '/' + id,
+      `${this.apiUri}/${id}`,
       data,
-      { headers: this.httpOptions }
+      {
+        headers: this.getHeaders()
+      }
     );
   }
 
-  // DELETE - eliminar receta
-  deleteReceta(id: any) {
+  // DELETE
+  deleteReceta(id: any): Observable<any> {
+
     return this.http.delete<any>(
-      this.apiUri + '/' + id,
-      { headers: this.httpOptions }
+      `${this.apiUri}/${id}`,
+      {
+        headers: this.getHeaders()
+      }
     );
   }
-}
+} 
