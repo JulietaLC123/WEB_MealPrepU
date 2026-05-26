@@ -177,6 +177,35 @@ a:hover { color: var(--mp-orange); }
 
 .card-body { padding: 1.75rem; }
 
+.receta-card {
+  border-radius: 18px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.receta-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.12) !important;
+}
+
+.receta-card .card-title {
+  color: #198754;
+}
+
+.receta-card ul li,
+.receta-card ol li {
+  margin-bottom: 4px;
+}
+
+.receta-card .dropdown button {
+  width: 36px;
+  height: 36px;
+}
+
+.card-footer {
+  background: transparent;
+}
+
 /* ── TABLES ── */
 .table {
   font-size: .9rem;

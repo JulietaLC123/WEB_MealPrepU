@@ -1,40 +1,43 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-success">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
   <div class="container">
-    <a class="navbar-brand" routerLink="/recetas">
-      <i class="bi bi-egg-fried me-2"></i>MealPrepU
+
+    <a class="navbar-brand fw-bold" routerLink="/recetas">
+      🍳 MealPrepU
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        @if (authService.isLoggedIn()) {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/recetas">
-              <i class="bi bi-journal-richtext me-1"></i>Recetas
-            </a>
-          </li>
-          @if (authService.isAdmin()) {
-            <li class="nav-item">
-              <span class="nav-link text-warning">
-                <i class="bi bi-shield-check me-1"></i>Admin
-              </span>
-            </li>
+
+    <div class="d-flex align-items-center gap-3 ms-auto">
+
+      @if (isLoggedIn()) {
+
+        <div class="text-light small">
+          Bienvenido,
+          <strong>{{ getUserName() }}</strong>
+
+          @if (isAdmin()) {
+            <span class="badge bg-warning text-dark ms-2">
+              Admin
+            </span>
           }
-          <li class="nav-item">
-            <button class="btn btn-outline-light btn-sm mt-1" (click)="logout()">
-              <i class="bi bi-box-arrow-right me-1"></i>Salir
-            </button>
-          </li>
-        } @else {
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/login">Iniciar sesión</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" routerLink="/signup">Registrarse</a>
-          </li>
-        }
-      </ul>
+        </div>
+
+        <button class="btn btn-outline-light btn-sm"
+                (click)="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i>
+          Salir
+        </button>
+
+      } @else {
+
+        <a routerLink="/login" class="btn btn-outline-light btn-sm">
+          Iniciar sesión
+        </a>
+
+        <a routerLink="/signup" class="btn btn-success btn-sm">
+          Registro
+        </a>
+
+      }
+
     </div>
   </div>
 </nav>

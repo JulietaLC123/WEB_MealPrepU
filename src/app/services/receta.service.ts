@@ -15,71 +15,37 @@ export class RecetaService {
 
   constructor(private http: HttpClient) {}
 
-  // HEADERS CON TOKEN
+  // La API usa 'access-token', NO 'Authorization: Bearer'
   private getHeaders(): HttpHeaders {
-
     const token = localStorage.getItem('token');
-
     return new HttpHeaders({
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      'access-token': token || ''
     });
   }
 
-  // GET - obtener todas
+  // GET - obtener todas (sin token, la API no lo exige)
   getAllRecetasData(): Observable<any> {
-
-    return this.http.get<any>(
-      this.apiUri,
-      {
-        headers: this.getHeaders()
-      }
-    );
+    return this.http.get<any>(this.apiUri);
   }
 
   // GET - obtener una
   getOneReceta(id: any): Observable<any> {
-
-    return this.http.get<any>(
-      `${this.apiUri}/${id}`,
-      {
-        headers: this.getHeaders()
-      }
-    );
+    return this.http.get<any>(`${this.apiUri}/${id}`);
   }
 
-  // POST
+  // POST - requiere token
   newReceta(data: any): Observable<any> {
-
-    return this.http.post<any>(
-      this.apiUri,
-      data,
-      {
-        headers: this.getHeaders()
-      }
-    );
+    return this.http.post<any>(this.apiUri, data, { headers: this.getHeaders() });
   }
 
-  // PUT
+  // PUT - requiere token + admin
   updateReceta(id: any, data: any): Observable<any> {
-
-    return this.http.put<any>(
-      `${this.apiUri}/${id}`,
-      data,
-      {
-        headers: this.getHeaders()
-      }
-    );
+    return this.http.put<any>(`${this.apiUri}/${id}`, data, { headers: this.getHeaders() });
   }
 
-  // DELETE
+  // DELETE - requiere token
   deleteReceta(id: any): Observable<any> {
-
-    return this.http.delete<any>(
-      `${this.apiUri}/${id}`,
-      {
-        headers: this.getHeaders()
-      }
-    );
+    return this.http.delete<any>(`${this.apiUri}/${id}`, { headers: this.getHeaders() });
   }
-} 
+}

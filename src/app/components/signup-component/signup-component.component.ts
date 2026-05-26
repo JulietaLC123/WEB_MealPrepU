@@ -52,23 +52,12 @@ export class SignupComponentComponent {
     const { confirmPassword, ...data } = this.signupForm.value;
     this.authService.register(data).subscribe({
       next: (res: any) => {
-
         localStorage.setItem('token', res.token);
-
-        const payload = JSON.parse(
-          atob(res.token.split('.')[1])
-        );
-
-        localStorage.setItem(
-          'role',
-          payload.rol || 'user'
-        );
-
-        this.toastr.success(
-          'Cuenta creada correctamente',
-          '¡Registro exitoso!'
-        );
-
+        const payload = JSON.parse(atob(res.token.split('.')[1]));
+        localStorage.setItem('role', payload.rol || 'usuario');
+        localStorage.setItem('userId', payload.id || '');
+        localStorage.setItem('nombre', payload.nombre || 'Usuario');
+        this.toastr.success('Cuenta creada correctamente', '¡Registro exitoso!');
         this.router.navigate(['/recetas']);
       },
       error: () => {

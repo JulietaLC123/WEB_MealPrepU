@@ -1,18 +1,32 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
-  constructor(public authService: AuthService) {}
 
-  logout() {
-    this.authService.logout();
+  constructor(private router: Router) {}
+
+  isLoggedIn(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  getUserName(): string {
+    return localStorage.getItem('nombre') || 'Usuario';
+  }
+
+  isAdmin(): boolean {
+    return localStorage.getItem('role') === 'admin';
+  }
+
+  logout(): void {
+    localStorage.clear();
+    this.router.navigate(['/login']);
   }
 }

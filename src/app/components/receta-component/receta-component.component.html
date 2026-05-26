@@ -26,15 +26,6 @@
         <option value="Postre">Postre</option>
       </select>
     </div>
-    <div>
-      <label class="form-label"><i class="bi bi-clock me-1"></i>Tiempo máx.</label>
-      <select class="form-select" [(ngModel)]="filtroTiempo">
-        <option value="">Sin límite</option>
-        <option value="15">Hasta 15 min</option>
-        <option value="30">Hasta 30 min</option>
-        <option value="60">Hasta 60 min</option>
-      </select>
-    </div>
     <div style="display:flex; align-items:flex-end;">
       <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">
         <i class="bi bi-x-circle me-1"></i>Limpiar
@@ -48,99 +39,215 @@
       <i class="bi bi-list-ul"></i>
       Lista de recetas
     </h2>
-    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNuevaReceta">
-      <i class="bi bi-plus-circle me-1"></i>Nueva Receta
-    </button>
+    @if (isLoggedIn()) {
+      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNuevaReceta">
+        <i class="bi bi-plus-circle me-1"></i>Nueva Receta
+      </button>
+    }
   </div>
 
-  <!-- TABLA DE RECETAS -->
+  <!-- RECETAS EN TARJETAS -->
   @if (recetasFiltradas().length > 0) {
-    <div class="table-responsive">
-      <table class="table table-striped table-sm table-hover">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Ingredientes</th>
-            <th><i class="bi bi-clock me-1"></i>Tiempo</th>
-            <th><i class="bi bi-tag me-1"></i>Categoría</th>
-            <th>Editar</th>
-            <th>Eliminar</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of recetasFiltradas(); track item._id) {
-            <tr>
-              <td data-label="Nombre"><strong>{{ item.nombre }}</strong></td>
-              <td data-label="Descripción">{{ item.descripcion }}</td>
-              <td data-label="Ingredientes" style="max-width:200px;white-space:normal;">{{ item.ingredientes }}</td>
-              <td data-label="Tiempo">
-                <span class="badge badge-time"><i class="bi bi-clock me-1"></i>{{ item.tiempoPreparacion }} min</span>
-              </td>
-              <td data-label="Categoría">
-                <span class="badge badge-category">{{ item.categoria }}</span>
-              </td>
-              <td data-label="Editar">
-                <button type="button" class="btn btn-warning btn-sm" (click)="toggleEditReceta(item._id)">
-                  <i class="bi bi-pencil-square"></i>
-                </button>
-              </td>
-              <td data-label="Eliminar">
-                <button type="button" class="btn btn-danger btn-sm" (click)="deleteRecetaEntry(item._id)">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+
+    <div class="row g-4">
+
+      @for (item of recetasFiltradas(); track item._id) {
+
+        <div class="col-xl-4 col-lg-6 col-md-6">
+
+          <div class="card receta-card h-100 shadow-sm border-0">
+
+            <div class="card-body d-flex flex-column">
+
+              <!-- HEADER -->
+              <div class="d-flex justify-content-between align-items-start mb-3">
+
+                <div>
+                  <h4 class="card-title fw-bold mb-1">
+                    {{ item.titulo }}
+                  </h4>
+
+                  <small class="text-muted">
+                    <i class="bi bi-person-circle me-1"></i>
+                    {{ getNombreAutor(item) }}
+                  </small>
+                </div>
+
+                @if (canDelete(item)) {
+
+                  <div class="dropdown">
+
+                    <button
+                      class="btn btn-light btn-sm rounded-circle"
+                      data-bs-toggle="dropdown"
+                    >
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                      <li>
+                        <button
+                          class="dropdown-item"
+                          type="button"
+                          (click)="toggleEditReceta(item)"
+                        >
+                          <i class="bi bi-pencil-square me-2"></i>
+                          Editar
+                        </button>
+                      </li>
+
+                      <li>
+                        <button
+                          class="dropdown-item text-danger"
+                          type="button"
+                          (click)="deleteRecetaEntry(item._id)"
+                        >
+                          <i class="bi bi-trash me-2"></i>
+                          Eliminar
+                        </button>
+                      </li>
+
+                    </ul>
+
+                  </div>
+                }
+
+              </div>
+
+              <!-- DESCRIPCIÓN -->
+              <p class="text-muted mb-3">
+                {{ item.descripcion }}
+              </p>
+
+              <!-- INGREDIENTES -->
+              <div class="mb-3">
+
+                <h6 class="fw-bold text-success">
+                  <i class="bi bi-basket2-fill me-1"></i>
+                  Ingredientes
+                </h6>
+
+                <ul class="ps-3 small mb-0">
+
+                  @for (ingrediente of item.ingredientes; track ingrediente) {
+                    <li>{{ ingrediente }}</li>
+                  }
+
+                </ul>
+
+              </div>
+
+              <!-- PASOS -->
+              <div class="flex-grow-1">
+
+                <h6 class="fw-bold text-success">
+                  <i class="bi bi-list-check me-1"></i>
+                  Preparación
+                </h6>
+
+                <ol class="ps-3 small mb-0">
+
+                  @for (paso of item.pasos; track paso) {
+                    <li>{{ paso }}</li>
+                  }
+
+                </ol>
+
+              </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
+
+              <div class="d-flex justify-content-between align-items-center">
+
+                <span class="badge bg-success-subtle text-success border">
+                  MealPrepU
+                </span>
+
+                @if (item.fechaCreacion) {
+                  <small class="text-muted">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ item.fechaCreacion | date:'mediumDate' }}
+                  </small>
+                }
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      }
+
     </div>
+
   } @else {
+
     <div class="empty-state">
       <i class="bi bi-journal-x"></i>
+
       <h5>No hay recetas aquí</h5>
-      <p>{{ recetaList.length === 0 ? 'Agrega tu primera receta.' : 'Ninguna receta coincide con los filtros.' }}</p>
+
+      <p>
+        {{
+          recetaList.length === 0
+            ? 'Agrega tu primera receta.'
+            : 'Ninguna receta coincide con los filtros.'
+        }}
+      </p>
+
       @if (recetaList.length > 0) {
-        <button class="btn btn-outline-success btn-sm" (click)="limpiarFiltros()">
+
+        <button
+          class="btn btn-outline-success btn-sm"
+          (click)="limpiarFiltros()"
+        >
           Limpiar filtros
         </button>
+
       }
+
     </div>
+
   }
 
-  <!-- PANEL DE EDICIÓN -->
+  <!-- PANEL DE EDICIÓN (usa editForm separado, pre-cargado con datos reales) -->
   @if (editableReceta) {
-    <div class="edit-panel">
-      <h5><i class="bi bi-pencil-square"></i>Editar Receta</h5>
-      <form (ngSubmit)="updateRecetaEntry()" [formGroup]="recetaForm">
+    <div id="editSection" class="edit-panel">
+      <h5><i class="bi bi-pencil-square me-1"></i>Editar Receta</h5>
+      <p class="text-muted small">Los ingredientes y pasos se separan por comas.</p>
+      <form (ngSubmit)="updateRecetaEntry()" [formGroup]="editForm">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label">Nombre</label>
-            <input type="text" class="form-control" placeholder="Nombre de la receta" formControlName="nombre">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Tiempo (min)</label>
-            <input type="number" class="form-control" placeholder="ej. 30" formControlName="tiempoPreparacion">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Categoría</label>
-            <select class="form-select" formControlName="categoria">
-              <option value="">Seleccionar...</option>
-              <option>Desayuno</option><option>Almuerzo</option>
-              <option>Cena</option><option>Snack</option><option>Postre</option>
-            </select>
+            <label for="edit-titulo" class="form-label">Título *</label>
+            <input id="edit-titulo" name="titulo" type="text" class="form-control"
+              formControlName="titulo">
           </div>
           <div class="col-md-6">
-            <label class="form-label">Descripción</label>
-            <textarea class="form-control" rows="2" formControlName="descripcion"></textarea>
+            <label for="edit-descripcion" class="form-label">Descripción *</label>
+            <textarea id="edit-descripcion" name="descripcion" class="form-control" rows="2"
+              formControlName="descripcion"></textarea>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Ingredientes</label>
-            <textarea class="form-control" rows="2" formControlName="ingredientes"></textarea>
+            <label for="edit-ingredientes" class="form-label">Ingredientes * <small class="text-muted">(separados por coma)</small></label>
+            <textarea id="edit-ingredientes" name="ingredientes" class="form-control" rows="3"
+              placeholder="Ej: 2 huevos, 1 taza harina, sal"
+              formControlName="ingredientes"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label for="edit-pasos" class="form-label">Pasos * <small class="text-muted">(separados por coma)</small></label>
+            <textarea id="edit-pasos" name="pasos" class="form-control" rows="3"
+              placeholder="Ej: Mezclar ingredientes, Calentar sartén, Cocinar 5 min"
+              formControlName="pasos"></textarea>
           </div>
         </div>
         <div class="d-flex gap-2 mt-3">
-          <button type="submit" class="btn btn-warning">
+          <button type="submit" class="btn btn-warning" [disabled]="editForm.invalid">
             <i class="bi bi-save me-1"></i>Actualizar
           </button>
           <button type="button" class="btn btn-secondary" (click)="editableReceta = false">
@@ -159,39 +266,38 @@
     <div class="modal-content">
       <div class="modal-header">
         <h1 class="modal-title fs-5"><i class="bi bi-plus-circle me-2"></i>Nueva Receta</h1>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
+        <p class="text-muted small">Los ingredientes y pasos se separan por comas.</p>
         <form (ngSubmit)="newRecetaEntry()" [formGroup]="recetaForm">
           <div class="row g-3">
+            <div class="col-12">
+              <label for="new-titulo" class="form-label">Título *</label>
+              <input id="new-titulo" name="titulo" type="text" class="form-control"
+                placeholder="Ej: Pasta Alfredo" formControlName="titulo">
+            </div>
+            <div class="col-12">
+              <label for="new-descripcion" class="form-label">Descripción *</label>
+              <textarea id="new-descripcion" name="descripcion" class="form-control" rows="2"
+                placeholder="Descripción breve de la receta" formControlName="descripcion"></textarea>
+            </div>
             <div class="col-md-6">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-control" placeholder="Nombre de la receta" formControlName="nombre">
+              <label for="new-ingredientes" class="form-label">Ingredientes * <small class="text-muted">(separados por coma)</small></label>
+              <textarea id="new-ingredientes" name="ingredientes" class="form-control" rows="3"
+                placeholder="Ej: 2 huevos, 1 taza de harina, sal al gusto"
+                formControlName="ingredientes"></textarea>
             </div>
-            <div class="col-md-3">
-              <label class="form-label">Tiempo (min)</label>
-              <input type="number" class="form-control" placeholder="ej. 30" formControlName="tiempoPreparacion">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Categoría</label>
-              <select class="form-select" formControlName="categoria">
-                <option value="">Seleccionar...</option>
-                <option>Desayuno</option><option>Almuerzo</option>
-                <option>Cena</option><option>Snack</option><option>Postre</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Descripción</label>
-              <textarea class="form-control" rows="2" placeholder="Descripción breve" formControlName="descripcion"></textarea>
-            </div>
-            <div class="col-12">
-              <label class="form-label">Ingredientes</label>
-              <textarea class="form-control" rows="3" placeholder="Ej: 2 huevos, 1 taza de harina..." formControlName="ingredientes"></textarea>
+            <div class="col-md-6">
+              <label for="new-pasos" class="form-label">Pasos * <small class="text-muted">(separados por coma)</small></label>
+              <textarea id="new-pasos" name="pasos" class="form-control" rows="3"
+                placeholder="Ej: Mezclar ingredientes, Calentar sartén, Cocinar 5 min"
+                formControlName="pasos"></textarea>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-success" data-bs-dismiss="modal">
+            <button type="submit" class="btn btn-success" [disabled]="recetaForm.invalid" data-bs-dismiss="modal">
               <i class="bi bi-save me-1"></i>Guardar receta
             </button>
           </div>
