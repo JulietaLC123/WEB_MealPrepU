@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  HttpClient,
-  HttpHeaders
-} from '@angular/common/http';
-
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -15,7 +11,6 @@ export class RecetaService {
 
   constructor(private http: HttpClient) {}
 
-  // La API usa 'access-token', NO 'Authorization: Bearer'
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
@@ -24,9 +19,13 @@ export class RecetaService {
     });
   }
 
-  // GET - obtener todas (sin token, la API no lo exige)
-  getAllRecetasData(): Observable<any> {
-    return this.http.get<any>(this.apiUri);
+  // GET - obtener todas con filtros opcionales
+  getAllRecetasData(filtros?: { nombre?: string; categoria?: string; tiempoMax?: string }): Observable<any> {
+    let params = new HttpParams();
+    if (filtros?.nombre)    params = params.set('nombre', filtros.nombre);
+    if (filtros?.categoria) params = params.set('categoria', filtros.categoria);
+    if (filtros?.tiempoMax) params = params.set('tiempoMax', filtros.tiempoMax);
+    return this.http.get<any>(this.apiUri, { params });
   }
 
   // GET - obtener una

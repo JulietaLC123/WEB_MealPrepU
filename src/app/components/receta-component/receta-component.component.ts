@@ -23,10 +23,15 @@ export class RecetaComponentComponent implements OnInit {
   idReceta: any;
   editableReceta: boolean = false;
 
+  // Modal detalle
+  recetaSeleccionada: any = null;
+
   // Filtros
   filtroNombre: string = '';
   filtroCategoria: string = '';
   filtroTiempo: string = '';
+
+  readonly categorias = ['Desayuno', 'Almuerzo', 'Cena', 'Snack', 'Postre'];
 
   constructor(
     private recetaService: RecetaService,
@@ -37,72 +42,74 @@ export class RecetaComponentComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Formulario crear: campos según el modelo de la API
-    // ingredientes y pasos se ingresan separados por coma en un textarea
     this.recetaForm = this.formBuilder.group({
-      titulo:      ['', Validators.required],
-      descripcion: ['', Validators.required],
-      ingredientes: ['', Validators.required],  // string en UI, se convierte a array al enviar
-      pasos:        ['', Validators.required],   // string en UI, se convierte a array al enviar
+      titulo:            ['', Validators.required],
+      descripcion:       ['', Validators.required],
+      ingredientes:      ['', Validators.required],
+      pasos:             ['', Validators.required],
+      categoria:         ['', Validators.required],       // obligatorio
+      tiempoPreparacion: ['', [Validators.required, Validators.min(1)]]
     });
 
-    // Formulario editar: mismo shape
     this.editForm = this.formBuilder.group({
-      titulo:      ['', Validators.required],
-      descripcion: ['', Validators.required],
-      ingredientes: ['', Validators.required],
-      pasos:        ['', Validators.required],
+      titulo:            ['', Validators.required],
+      descripcion:       ['', Validators.required],
+      ingredientes:      ['', Validators.required],
+      pasos:             ['', Validators.required],
+      categoria:         ['', Validators.required],
+      tiempoPreparacion: ['', [Validators.required, Validators.min(1)]]
     });
 
     this.getAllRecetas();
   }
 
   // ── PERMISOS ──────────────────────────────────────────────
-  isAdmin(): boolean {
-    return this.authService.isAdmin();
+  isAdmin(): boolean   { return this.authService.isAdmin(); }
+  isLoggedIn(): boolean { return this.authService.isLoggedIn(); }
+
+  canEdit(receta: any): boolean {
+    const userId = localStorage.getItem('userId');
+    const autorId = receta.autorId?._id || receta.autorId;
+    return this.authService.isAdmin() || (!!userId && userId === autorId);
   }
 
-  isLoggedIn(): boolean {
-    return this.authService.isLoggedIn();
-  }
-
-  // Puede eliminar: admin O el propio autor
   canDelete(receta: any): boolean {
     const userId = localStorage.getItem('userId');
     const autorId = receta.autorId?._id || receta.autorId;
     return this.authService.isAdmin() || (!!userId && userId === autorId);
   }
 
-  // ── FILTROS ──────────────────────────────────────────────
-  recetasFiltradas(): any[] {
-    return this.recetaList.filter(r => {
-      // ingredientes llega como Array<string> desde la API
-      const ingStr = Array.isArray(r.ingredientes)
-        ? r.ingredientes.join(' ')
-        : (r.ingredientes || '');
-
-      const matchNombre = !this.filtroNombre ||
-        (r.titulo || '').toLowerCase().includes(this.filtroNombre.toLowerCase()) ||
-        ingStr.toLowerCase().includes(this.filtroNombre.toLowerCase());
-
-      const matchCategoria = !this.filtroCategoria ||
-        (r.categoria || '').toLowerCase() === this.filtroCategoria.toLowerCase();
-
-      const matchTiempo = !this.filtroTiempo ||
-        Number(r.tiempoPreparacion) <= Number(this.filtroTiempo);
-
-      return matchNombre && matchCategoria && matchTiempo;
-    });
+  // ── FILTROS (se aplican en la API) ────────────────────────
+  aplicarFiltros() {
+    this.getAllRecetas();
   }
 
   limpiarFiltros() {
     this.filtroNombre = '';
     this.filtroCategoria = '';
     this.filtroTiempo = '';
+    this.getAllRecetas();
+  }
+
+  // ── MODAL DETALLE ─────────────────────────────────────────
+  verDetalle(receta: any) {
+    this.recetaSeleccionada = receta;
+    // Abrir el modal nativo de Bootstrap
+    const modal = document.getElementById('modalDetalleReceta');
+    if (modal) {
+      (window as any).bootstrap.Modal.getOrCreateInstance(modal).show();
+    }
+  }
+
+  cerrarDetalle() {
+    this.recetaSeleccionada = null;
+    const modal = document.getElementById('modalDetalleReceta');
+    if (modal) {
+      (window as any).bootstrap.Modal.getOrCreateInstance(modal).hide();
+    }
   }
 
   // ── HELPERS ──────────────────────────────────────────────
-  // Muestra ingredientes bonito en la tabla
   mostrarIngredientes(r: any): string {
     return Array.isArray(r.ingredientes) ? r.ingredientes.join(', ') : (r.ingredientes || '');
   }
@@ -115,7 +122,6 @@ export class RecetaComponentComponent implements OnInit {
     return r.autorId?.nombre || '';
   }
 
-  // Convierte string "a, b, c" a array ["a","b","c"]
   private toArray(val: string): string[] {
     return val.split(',').map(s => s.trim()).filter(s => s.length > 0);
   }
@@ -129,22 +135,32 @@ export class RecetaComponentComponent implements OnInit {
 
   // ── CRUD ─────────────────────────────────────────────────
   getAllRecetas() {
-    this.recetaService.getAllRecetasData().subscribe({
+    const filtros = {
+      nombre:    this.filtroNombre    || undefined,
+      categoria: this.filtroCategoria || undefined,
+      tiempoMax: this.filtroTiempo    || undefined
+    };
+    this.recetaService.getAllRecetasData(filtros).subscribe({
       next: (data: any) => { this.recetaList = data; },
       error: () => this.toastr.error('No se pudieron cargar las recetas', 'Error')
     });
   }
 
   newRecetaEntry() {
-    if (this.recetaForm.invalid) return;
+    if (this.recetaForm.invalid) {
+      this.recetaForm.markAllAsTouched();
+      return;
+    }
     const v = this.recetaForm.value;
     const userId = localStorage.getItem('userId');
     const payload = {
-      titulo:      v.titulo,
-      descripcion: v.descripcion,
-      ingredientes: this.toArray(v.ingredientes),
-      pasos:        this.toArray(v.pasos),
-      autorId:      userId
+      titulo:            v.titulo,
+      descripcion:       v.descripcion,
+      ingredientes:      this.toArray(v.ingredientes),
+      pasos:             this.toArray(v.pasos),
+      categoria:         v.categoria,
+      tiempoPreparacion: Number(v.tiempoPreparacion),
+      autorId:           userId
     };
     this.recetaService.newReceta(payload).subscribe({
       next: () => {
@@ -160,29 +176,35 @@ export class RecetaComponentComponent implements OnInit {
 
   toggleEditReceta(receta: any) {
     this.idReceta = receta._id;
-    // Pre-cargar datos existentes en el formulario de edición
     this.editForm.setValue({
-      titulo:      receta.titulo || '',
-      descripcion: receta.descripcion || '',
+      titulo:            receta.titulo || '',
+      descripcion:       receta.descripcion || '',
       ingredientes: Array.isArray(receta.ingredientes)
         ? receta.ingredientes.join(', ')
         : (receta.ingredientes || ''),
       pasos: Array.isArray(receta.pasos)
         ? receta.pasos.join(', ')
-        : (receta.pasos || '')
+        : (receta.pasos || ''),
+      categoria:         receta.categoria || '',
+      tiempoPreparacion: receta.tiempoPreparacion || ''
     });
     this.editableReceta = true;
     setTimeout(() => document.getElementById('editSection')?.scrollIntoView({ behavior: 'smooth' }), 100);
   }
 
   updateRecetaEntry() {
-    if (this.editForm.invalid) return;
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
     const v = this.editForm.value;
     const payload = {
-      titulo:      v.titulo,
-      descripcion: v.descripcion,
-      ingredientes: this.toArray(v.ingredientes),
-      pasos:        this.toArray(v.pasos)
+      titulo:            v.titulo,
+      descripcion:       v.descripcion,
+      ingredientes:      this.toArray(v.ingredientes),
+      pasos:             this.toArray(v.pasos),
+      categoria:         v.categoria,
+      tiempoPreparacion: Number(v.tiempoPreparacion)
     };
     this.recetaService.updateReceta(this.idReceta, payload).subscribe({
       next: () => {

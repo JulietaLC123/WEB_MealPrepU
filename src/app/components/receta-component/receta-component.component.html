@@ -13,18 +13,21 @@
     <div>
       <label class="form-label"><i class="bi bi-search me-1"></i>Buscar</label>
       <input type="text" class="form-control" placeholder="Nombre o ingrediente..."
-        [(ngModel)]="filtroNombre">
+        [(ngModel)]="filtroNombre" (ngModelChange)="aplicarFiltros()">
     </div>
     <div>
       <label class="form-label"><i class="bi bi-tag me-1"></i>Categoría</label>
-      <select class="form-select" [(ngModel)]="filtroCategoria">
+      <select class="form-select" [(ngModel)]="filtroCategoria" (ngModelChange)="aplicarFiltros()">
         <option value="">Todas</option>
-        <option value="Desayuno">Desayuno</option>
-        <option value="Almuerzo">Almuerzo</option>
-        <option value="Cena">Cena</option>
-        <option value="Snack">Snack</option>
-        <option value="Postre">Postre</option>
+        @for (cat of categorias; track cat) {
+          <option [value]="cat">{{ cat }}</option>
+        }
       </select>
+    </div>
+    <div>
+      <label class="form-label"><i class="bi bi-clock me-1"></i>Tiempo máx. (min)</label>
+      <input type="number" class="form-control" placeholder="Ej: 30" min="1"
+        [(ngModel)]="filtroTiempo" (ngModelChange)="aplicarFiltros()">
     </div>
     <div style="display:flex; align-items:flex-end;">
       <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">
@@ -47,15 +50,16 @@
   </div>
 
   <!-- RECETAS EN TARJETAS -->
-  @if (recetasFiltradas().length > 0) {
+  @if (recetaList.length > 0) {
 
     <div class="row g-4">
 
-      @for (item of recetasFiltradas(); track item._id) {
+      @for (item of recetaList; track item._id) {
 
         <div class="col-xl-4 col-lg-6 col-md-6">
 
-          <div class="card receta-card h-100 shadow-sm border-0">
+          <div class="card receta-card h-100 shadow-sm border-0" style="cursor:pointer;"
+               (click)="verDetalle(item)">
 
             <div class="card-body d-flex flex-column">
 
@@ -63,119 +67,78 @@
               <div class="d-flex justify-content-between align-items-start mb-3">
 
                 <div>
-                  <h4 class="card-title fw-bold mb-1">
-                    {{ item.titulo }}
-                  </h4>
-
+                  <h4 class="card-title fw-bold mb-1">{{ item.titulo }}</h4>
                   <small class="text-muted">
                     <i class="bi bi-person-circle me-1"></i>
                     {{ getNombreAutor(item) }}
                   </small>
                 </div>
 
-                @if (canDelete(item)) {
-
-                  <div class="dropdown">
-
-                    <button
-                      class="btn btn-light btn-sm rounded-circle"
-                      data-bs-toggle="dropdown"
-                    >
+                @if (canEdit(item) || canDelete(item)) {
+                  <div class="dropdown" (click)="$event.stopPropagation()">
+                    <button class="btn btn-light btn-sm rounded-circle" data-bs-toggle="dropdown">
                       <i class="bi bi-three-dots-vertical"></i>
                     </button>
-
                     <ul class="dropdown-menu dropdown-menu-end">
-
-                      <li>
-                        <button
-                          class="dropdown-item"
-                          type="button"
-                          (click)="toggleEditReceta(item)"
-                        >
-                          <i class="bi bi-pencil-square me-2"></i>
-                          Editar
-                        </button>
-                      </li>
-
-                      <li>
-                        <button
-                          class="dropdown-item text-danger"
-                          type="button"
-                          (click)="deleteRecetaEntry(item._id)"
-                        >
-                          <i class="bi bi-trash me-2"></i>
-                          Eliminar
-                        </button>
-                      </li>
-
+                      @if (canEdit(item)) {
+                        <li>
+                          <button class="dropdown-item" type="button" (click)="toggleEditReceta(item)">
+                            <i class="bi bi-pencil-square me-2"></i>Editar
+                          </button>
+                        </li>
+                      }
+                      @if (canDelete(item)) {
+                        <li>
+                          <button class="dropdown-item text-danger" type="button" (click)="deleteRecetaEntry(item._id)">
+                            <i class="bi bi-trash me-2"></i>Eliminar
+                          </button>
+                        </li>
+                      }
                     </ul>
-
                   </div>
                 }
 
               </div>
 
               <!-- DESCRIPCIÓN -->
-              <p class="text-muted mb-3">
-                {{ item.descripcion }}
-              </p>
+              <p class="text-muted mb-3">{{ item.descripcion }}</p>
 
-              <!-- INGREDIENTES -->
+              <!-- INGREDIENTES (preview) -->
               <div class="mb-3">
-
                 <h6 class="fw-bold text-success">
-                  <i class="bi bi-basket2-fill me-1"></i>
-                  Ingredientes
+                  <i class="bi bi-basket2-fill me-1"></i>Ingredientes
                 </h6>
-
                 <ul class="ps-3 small mb-0">
-
                   @for (ingrediente of item.ingredientes; track ingrediente) {
                     <li>{{ ingrediente }}</li>
                   }
-
                 </ul>
-
-              </div>
-
-              <!-- PASOS -->
-              <div class="flex-grow-1">
-
-                <h6 class="fw-bold text-success">
-                  <i class="bi bi-list-check me-1"></i>
-                  Preparación
-                </h6>
-
-                <ol class="ps-3 small mb-0">
-
-                  @for (paso of item.pasos; track paso) {
-                    <li>{{ paso }}</li>
-                  }
-
-                </ol>
-
               </div>
 
             </div>
 
             <!-- FOOTER -->
             <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
-
               <div class="d-flex justify-content-between align-items-center">
 
-                <span class="badge bg-success-subtle text-success border">
-                  MealPrepU
-                </span>
+                <div class="d-flex gap-2">
+                  @if (item.categoria) {
+                    <span class="badge bg-success-subtle text-success border">
+                      {{ item.categoria }}
+                    </span>
+                  }
+                  @if (item.tiempoPreparacion) {
+                    <span class="badge bg-light text-secondary border">
+                      <i class="bi bi-clock me-1"></i>{{ item.tiempoPreparacion }} min
+                    </span>
+                  }
+                </div>
 
-                @if (item.fechaCreacion) {
-                  <small class="text-muted">
-                    <i class="bi bi-calendar3 me-1"></i>
-                    {{ item.fechaCreacion | date:'mediumDate' }}
-                  </small>
-                }
+                <small class="text-muted">
+                  <i class="bi bi-eye me-1"></i>Ver preparación
+                </small>
 
               </div>
-
             </div>
 
           </div>
@@ -190,33 +153,16 @@
 
     <div class="empty-state">
       <i class="bi bi-journal-x"></i>
-
       <h5>No hay recetas aquí</h5>
-
-      <p>
-        {{
-          recetaList.length === 0
-            ? 'Agrega tu primera receta.'
-            : 'Ninguna receta coincide con los filtros.'
-        }}
-      </p>
-
-      @if (recetaList.length > 0) {
-
-        <button
-          class="btn btn-outline-success btn-sm"
-          (click)="limpiarFiltros()"
-        >
-          Limpiar filtros
-        </button>
-
-      }
-
+      <p>Ninguna receta coincide con los filtros.</p>
+      <button class="btn btn-outline-success btn-sm" (click)="limpiarFiltros()">
+        Limpiar filtros
+      </button>
     </div>
 
   }
 
-  <!-- PANEL DE EDICIÓN (usa editForm separado, pre-cargado con datos reales) -->
+  <!-- PANEL DE EDICIÓN -->
   @if (editableReceta) {
     <div id="editSection" class="edit-panel">
       <h5><i class="bi bi-pencil-square me-1"></i>Editar Receta</h5>
@@ -224,26 +170,37 @@
       <form (ngSubmit)="updateRecetaEntry()" [formGroup]="editForm">
         <div class="row g-3">
           <div class="col-md-6">
-            <label for="edit-titulo" class="form-label">Título *</label>
-            <input id="edit-titulo" name="titulo" type="text" class="form-control"
-              formControlName="titulo">
+            <label class="form-label">Título *</label>
+            <input type="text" class="form-control" formControlName="titulo">
           </div>
           <div class="col-md-6">
-            <label for="edit-descripcion" class="form-label">Descripción *</label>
-            <textarea id="edit-descripcion" name="descripcion" class="form-control" rows="2"
-              formControlName="descripcion"></textarea>
+            <label class="form-label">Descripción *</label>
+            <textarea class="form-control" rows="2" formControlName="descripcion"></textarea>
           </div>
           <div class="col-md-6">
-            <label for="edit-ingredientes" class="form-label">Ingredientes * <small class="text-muted">(separados por coma)</small></label>
-            <textarea id="edit-ingredientes" name="ingredientes" class="form-control" rows="3"
-              placeholder="Ej: 2 huevos, 1 taza harina, sal"
-              formControlName="ingredientes"></textarea>
+            <label class="form-label">Ingredientes * <small class="text-muted">(separados por coma)</small></label>
+            <textarea class="form-control" rows="3" formControlName="ingredientes"></textarea>
           </div>
           <div class="col-md-6">
-            <label for="edit-pasos" class="form-label">Pasos * <small class="text-muted">(separados por coma)</small></label>
-            <textarea id="edit-pasos" name="pasos" class="form-control" rows="3"
-              placeholder="Ej: Mezclar ingredientes, Calentar sartén, Cocinar 5 min"
-              formControlName="pasos"></textarea>
+            <label class="form-label">Pasos * <small class="text-muted">(separados por coma)</small></label>
+            <textarea class="form-control" rows="3" formControlName="pasos"></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Categoría *</label>
+            <select class="form-select" formControlName="categoria">
+              <option value="">Selecciona una categoría</option>
+              @for (cat of categorias; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+            @if (editForm.get('categoria')?.touched && editForm.get('categoria')?.invalid) {
+              <div class="text-danger small mt-1">La categoría es obligatoria.</div>
+            }
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Tiempo de preparación (min) *</label>
+            <input type="number" class="form-control" min="1" formControlName="tiempoPreparacion"
+              placeholder="Ej: 20">
           </div>
         </div>
         <div class="d-flex gap-2 mt-3">
@@ -273,24 +230,41 @@
         <form (ngSubmit)="newRecetaEntry()" [formGroup]="recetaForm">
           <div class="row g-3">
             <div class="col-12">
-              <label for="new-titulo" class="form-label">Título *</label>
-              <input id="new-titulo" name="titulo" type="text" class="form-control"
-                placeholder="Ej: Pasta Alfredo" formControlName="titulo">
+              <label class="form-label">Título *</label>
+              <input type="text" class="form-control" placeholder="Ej: Pasta Alfredo"
+                formControlName="titulo">
             </div>
             <div class="col-12">
-              <label for="new-descripcion" class="form-label">Descripción *</label>
-              <textarea id="new-descripcion" name="descripcion" class="form-control" rows="2"
-                placeholder="Descripción breve de la receta" formControlName="descripcion"></textarea>
+              <label class="form-label">Descripción *</label>
+              <textarea class="form-control" rows="2" placeholder="Descripción breve de la receta"
+                formControlName="descripcion"></textarea>
             </div>
             <div class="col-md-6">
-              <label for="new-ingredientes" class="form-label">Ingredientes * <small class="text-muted">(separados por coma)</small></label>
-              <textarea id="new-ingredientes" name="ingredientes" class="form-control" rows="3"
+              <label class="form-label">Categoría *</label>
+              <select class="form-select" formControlName="categoria">
+                <option value="">Selecciona una categoría</option>
+                @for (cat of categorias; track cat) {
+                  <option [value]="cat">{{ cat }}</option>
+                }
+              </select>
+              @if (recetaForm.get('categoria')?.touched && recetaForm.get('categoria')?.invalid) {
+                <div class="text-danger small mt-1">La categoría es obligatoria.</div>
+              }
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tiempo de preparación (min) *</label>
+              <input type="number" class="form-control" min="1" formControlName="tiempoPreparacion"
+                placeholder="Ej: 20">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Ingredientes * <small class="text-muted">(separados por coma)</small></label>
+              <textarea class="form-control" rows="3"
                 placeholder="Ej: 2 huevos, 1 taza de harina, sal al gusto"
                 formControlName="ingredientes"></textarea>
             </div>
             <div class="col-md-6">
-              <label for="new-pasos" class="form-label">Pasos * <small class="text-muted">(separados por coma)</small></label>
-              <textarea id="new-pasos" name="pasos" class="form-control" rows="3"
+              <label class="form-label">Pasos * <small class="text-muted">(separados por coma)</small></label>
+              <textarea class="form-control" rows="3"
                 placeholder="Ej: Mezclar ingredientes, Calentar sartén, Cocinar 5 min"
                 formControlName="pasos"></textarea>
             </div>
@@ -303,6 +277,85 @@
           </div>
         </form>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE RECETA -->
+<div class="modal fade" id="modalDetalleReceta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+
+      @if (recetaSeleccionada) {
+
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-journal-richtext me-2"></i>{{ recetaSeleccionada.titulo }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+            aria-label="Cerrar" (click)="recetaSeleccionada = null"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- Meta info -->
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            @if (recetaSeleccionada.categoria) {
+              <span class="badge bg-success-subtle text-success border fs-6">
+                <i class="bi bi-tag me-1"></i>{{ recetaSeleccionada.categoria }}
+              </span>
+            }
+            @if (recetaSeleccionada.tiempoPreparacion) {
+              <span class="badge bg-light text-secondary border fs-6">
+                <i class="bi bi-clock me-1"></i>{{ recetaSeleccionada.tiempoPreparacion }} min
+              </span>
+            }
+            @if (recetaSeleccionada.autorId?.nombre) {
+              <span class="badge bg-light text-secondary border fs-6">
+                <i class="bi bi-person me-1"></i>{{ recetaSeleccionada.autorId.nombre }}
+              </span>
+            }
+          </div>
+
+          <!-- Descripción -->
+          <p class="text-muted">{{ recetaSeleccionada.descripcion }}</p>
+
+          <hr>
+
+          <!-- Ingredientes -->
+          <h6 class="fw-bold text-success mb-2">
+            <i class="bi bi-basket2-fill me-1"></i>Ingredientes
+          </h6>
+          <ul class="mb-4">
+            @for (ing of recetaSeleccionada.ingredientes; track ing) {
+              <li>{{ ing }}</li>
+            }
+          </ul>
+
+          <!-- Preparación paso a paso -->
+          <h6 class="fw-bold text-success mb-3">
+            <i class="bi bi-list-ol me-1"></i>Preparación
+          </h6>
+          <ol class="list-group list-group-numbered mb-3">
+            @for (paso of recetaSeleccionada.pasos; track paso; let i = $index) {
+              <li class="list-group-item border-0 d-flex align-items-start gap-2 ps-0">
+                <span class="badge bg-success rounded-pill me-1">{{ i + 1 }}</span>
+                {{ paso }}
+              </li>
+            }
+          </ol>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+            (click)="recetaSeleccionada = null">
+            Cerrar
+          </button>
+        </div>
+
+      }
+
     </div>
   </div>
 </div>
